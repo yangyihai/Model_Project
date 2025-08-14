@@ -47,17 +47,15 @@ class MagicCubeGUI:
         
         # 初始化QBR相关资源
         if QBR_AVAILABLE:
-            # 设置QBR的i18n
-            locale = config.config.get_setting('locale')
-            if not locale:
-                config.config.set_setting('locale', 'zh')
-                locale = config.config.get_setting('locale')
+            # 设置QBR的i18n，强制使用中文
+            config.config.set_setting('locale', 'zh')
+            locale = 'zh'
             
             i18n.load_path.append(os.path.join(src_dir, 'translations'))
             i18n.set('filename_format', '{locale}.{format}')
             i18n.set('file_format', 'json')
             i18n.set('locale', locale)
-            i18n.set('fallback', 'en')
+            i18n.set('fallback', 'zh')
         
         # 创建基本界面
         self.create_widgets()
@@ -224,23 +222,28 @@ class MagicCubeGUI:
             
             # 为用户提供使用说明
             self.log_status("QBR功能已启动")
-            self.log_status("按'c'键进入颜色校准模式")
-            self.log_status("在校准模式中，依次展示每个面的中心块，按空格键校准")
-            self.log_status("完成校准后，按'c'键退出校准模式")
-            self.log_status("然后进行魔方面的录入:")
-            self.log_status("1. 按对应的按键(U/R/F/D/L/B)选择要录入的面")
-            self.log_status("2. 按空格键拍摄并记录当前选择的面")
-            self.log_status("3. 重复以上步骤直到录入所有六个面")
+            self.log_status("===== 操作指南 =====")
+            self.log_status("第一步：校准颜色")
+            self.log_status("1. 请按'c'键进入颜色校准模式")
+            self.log_status("2. 将魔方绿色面的中心块对准摄像头框内")
+            self.log_status("3. 按空格键校准绿色")
+            self.log_status("4. 依次校准其他颜色（红、蓝、橙、白、黄）")
+            self.log_status("5. 全部校准后，按'c'键退出校准模式")
             self.log_status("")
-            self.log_status("面的标准定义（仅供参考，您可以根据自己的习惯选择）:")
-            self.log_status("U (Up/上面) - 通常为白色")
-            self.log_status("R (Right/右面) - 通常为红色")
-            self.log_status("F (Front/前面) - 通常为绿色")
-            self.log_status("D (Down/下面) - 通常为黄色")
-            self.log_status("L (Left/左面) - 通常为橙色")
-            self.log_status("B (Back/后面) - 通常为蓝色")
+            self.log_status("第二步：录入魔方面")
+            self.log_status("1. 按对应的按键选择要录入的面：")
+            self.log_status("   U - 上面 (通常为白色)")
+            self.log_status("   R - 右面 (通常为红色)")
+            self.log_status("   F - 前面 (通常为绿色)")
+            self.log_status("   D - 下面 (通常为黄色)")
+            self.log_status("   L - 左面 (通常为橙色)")
+            self.log_status("   B - 后面 (通常为蓝色)")
+            self.log_status("2. 将选择的面对准摄像头，确保能看到9个方块")
+            self.log_status("3. 按空格键拍摄并记录当前面")
+            self.log_status("4. 重复以上步骤直到录入所有六个面")
             self.log_status("")
             self.log_status("完成所有面的拍摄后，程序会自动生成解法")
+            self.log_status("===================")
             
         except Exception as e:
             self.log_status(f"初始化QBR功能失败: {e}")

@@ -15,18 +15,16 @@ from constants import (
     E_ALREADY_SOLVED
 )
 
-# Set default locale.
-locale = config.get_setting('locale')
-if not locale:
-    config.set_setting('locale', 'en')
-    locale = config.get_setting('locale')
+# 强制设置为中文
+config.set_setting('locale', 'zh')
+locale = 'zh'
 
 # Init i18n.
 i18n.load_path.append(os.path.join(ROOT_DIR, 'translations'))
 i18n.set('filename_format', '{locale}.{format}')
 i18n.set('file_format', 'json')
 i18n.set('locale', locale)
-i18n.set('fallback', 'en')
+i18n.set('fallback', 'zh')
 
 class Qbr:
 

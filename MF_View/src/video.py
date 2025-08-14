@@ -322,31 +322,55 @@ class Webcam:
 
     def draw_scanned_sides(self):
         """Display how many sides are scanned by the user."""
-        text = i18n.t('scannedSides', num=len(self.result_state.keys()))
+        text = f"已扫描面数: {len(self.result_state.keys())}/6"
         self.render_text(text, (20, self.height - 20), anchor='lb')
         
         # 显示面选择按键提示
         face_mapping = {
-            'U': "U (Up/上面)",
-            'R': "R (Right/右面)",
-            'F': "F (Front/前面)",
-            'D': "D (Down/下面)",
-            'L': "L (Left/左面)",
-            'B': "B (Back/后面)",
+            'U': "U - 上面 (白色)",
+            'R': "R - 右面 (红色)",
+            'F': "F - 前面 (绿色)",
+            'D': "D - 下面 (黄色)",
+            'L': "L - 左面 (橙色)",
+            'B': "B - 后面 (蓝色)",
         }
         
-        # 如果当前已经选择了面，显示它
+        # 如果当前已经选择了面，显示它并给出清晰指引
         if hasattr(self, 'current_selected_face') and self.current_selected_face:
             face_text = f"当前选择的面: {face_mapping[self.current_selected_face]}"
             self.render_text(face_text, (20, self.height - 50), anchor='lb')
+            instruction = "将面对准摄像头中央，确保能看到9个方块，然后按空格键拍摄"
+            self.render_text(instruction, (20, self.height - 80), anchor='lb')
         else:
             face_text = "请按 U, R, F, D, L, B 键选择要录入的面"
             self.render_text(face_text, (20, self.height - 50), anchor='lb')
         
         # 显示已扫描的面
         if len(self.result_state.keys()) > 0:
-            scanned_text = "已扫描的面: " + ", ".join(f"{k.upper()}" for k in self.result_state.keys())
-            self.render_text(scanned_text, (20, self.height - 80), anchor='lb')
+            color_to_face = {
+                'white': 'U(上)',
+                'red': 'R(右)',
+                'green': 'F(前)',
+                'yellow': 'D(下)',
+                'orange': 'L(左)',
+                'blue': 'B(后)'
+            }
+            
+            scanned_faces = []
+            for color in self.result_state.keys():
+                if color in color_to_face:
+                    scanned_faces.append(color_to_face[color])
+                else:
+                    scanned_faces.append(color)
+                    
+            scanned_text = "已扫描的面: " + ", ".join(scanned_faces)
+            self.render_text(scanned_text, (20, self.height - 110), anchor='lb')
+            
+            if len(self.result_state.keys()) == 6:
+                self.render_text("所有面已扫描完成，正在计算解法...", (20, self.height - 140), anchor='lb')
+            else:
+                remaining = 6 - len(self.result_state.keys())
+                self.render_text(f"还需扫描 {remaining} 个面", (20, self.height - 140), anchor='lb')
 
     def draw_current_color_to_calibrate(self):
         """Display the current side's color that needs to be calibrated."""
@@ -354,8 +378,8 @@ class Webcam:
         font_size = int(TEXT_SIZE * 1.25)
         if self.done_calibrating:
             messages = [
-                i18n.t('calibratedSuccessfully'),
-                i18n.t('quitCalibrateMode', keyValue=CALIBRATE_MODE_KEY),
+                "校准成功！",
+                f"请按 {CALIBRATE_MODE_KEY} 键退出校准模式",
             ]
             for index, text in enumerate(messages):
                 _, textsize_height = self.get_text_size(text, font_size)
@@ -363,12 +387,39 @@ class Webcam:
                 self.render_text(text, (int(self.width / 2), y), size=font_size, anchor='mt')
         else:
             current_color = self.colors_to_calibrate[self.current_color_to_calibrate_index]
-            text = i18n.t('currentCalibratingSide.{}'.format(current_color))
+            color_names = {
+                'green': '绿色',
+                'red': '红色',
+                'blue': '蓝色',
+                'orange': '橙色',
+                'white': '白色',
+                'yellow': '黄色'
+            }
+            
+            # 显示当前要校准的颜色
+            text = f"请校准{color_names[current_color]}面"
             self.render_text(text, (int(self.width / 2), offset_y), size=font_size, anchor='mt')
+            
+            # 显示操作提示
+            instruction = "将魔方中心块对准摄像头，按空格键校准"
+            self.render_text(instruction, (int(self.width / 2), offset_y + 40), size=int(font_size*0.8), anchor='mt')
+            
+            # 显示进度
+            progress = f"进度: {self.current_color_to_calibrate_index+1}/6"
+            self.render_text(progress, (int(self.width / 2), offset_y + 70), size=int(font_size*0.8), anchor='mt')
 
     def draw_calibrated_colors(self):
         """Display all the colors that are calibrated while in calibrate mode."""
         offset_y = 20
+        color_names = {
+            'green': '绿色面',
+            'red': '红色面',
+            'blue': '蓝色面',
+            'orange': '橙色面',
+            'white': '白色面',
+            'yellow': '黄色面'
+        }
+        
         for index, (color_name, color_bgr) in enumerate(self.calibrated_colors.items()):
             x1 = 90
             y1 = int(offset_y + STICKER_AREA_TILE_SIZE * index)
@@ -392,7 +443,7 @@ class Webcam:
                 tuple([int(c) for c in color_bgr]),
                 -1
             )
-            self.render_text(i18n.t(color_name), (20, y1 + STICKER_AREA_TILE_SIZE / 2 - 3), anchor='lm')
+            self.render_text(color_names.get(color_name, color_name), (20, y1 + STICKER_AREA_TILE_SIZE / 2 - 3), anchor='lm')
 
     def reset_calibrate_mode(self):
         """Reset calibrate mode variables."""
@@ -401,10 +452,7 @@ class Webcam:
         self.done_calibrating = False
 
     def draw_current_language(self):
-        text = '{}: {}'.format(
-            i18n.t('language'),
-            LOCALES[config.get_setting('locale')]
-        )
+        text = '当前语言: 简体中文'
         offset = 20
         self.render_text(text, (self.width - offset, offset), anchor='rt')
 
